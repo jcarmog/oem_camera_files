@@ -48,8 +48,8 @@ samsung/
 1. **v4l2loopback 1080p Resolution Cap**:
    Updates `/etc/modprobe.d/v4l2loopback.conf` to allow `max_width=1920` and `max_height=1080`.
 
-2. **v4l2-relayd Daemon Configuration**:
-   Sets `/etc/default/v4l2-relayd` parameters to `WIDTH=1920`, `HEIGHT=1080`, `FORMAT=NV12`, `FRAMERATE=30/1`, and `VIDEOSRC="icamerasrc buffer-count=7 sharpness=30 saturation=10 wdr-level=120 ! videoflip video-direction=horiz"` to enhance image sharpness, color saturation, wide dynamic range (WDR), and horizontal un-mirroring.
+2. **v4l2-relayd High-Definition ISP Quality Tuning**:
+   Sets `/etc/default/v4l2-relayd` parameters to `WIDTH=1920`, `HEIGHT=1080`, `FORMAT=NV12`, `FRAMERATE=30/1`, and `VIDEOSRC="icamerasrc buffer-count=10 sensor-resolution=0 src-stream-usage=1 sharpness=40 contrast=15 saturation=15 wdr-level=140 ! videoflip video-direction=horiz"` to maximize image definition, edge sharpness, contrast depth, color saturation, wide dynamic range (WDR), and smooth 1080p frame buffering.
 
 3. **OEM Calibration & Color Tuning Installation**:
    Copies `OV02C10_KBFC645_ADL.aiqb`, `.cpf`, and graph XML settings into `/etc/camera/ipu6/`, `/etc/camera/ipu6ep/`, and `/etc/camera/ipu6epmtl/`. Updates sensor definitions to link the `KBFC645` tuning file.

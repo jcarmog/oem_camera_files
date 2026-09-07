@@ -47,8 +47,8 @@ for cfg in "/etc/default/v4l2-relayd" "/etc/v4l2-relayd.d/default.conf" "/etc/v4
     if [ -f "$cfg" ]; then
         sed -i "s/WIDTH=[0-9]*/WIDTH=1920/" "$cfg"
         sed -i "s/HEIGHT=[0-9]*/HEIGHT=1080/" "$cfg"
-        sed -i 's|VIDEOSRC=.*|VIDEOSRC="icamerasrc buffer-count=7 sharpness=30 saturation=10 wdr-level=120 ! videoflip video-direction=horiz"|' "$cfg"
-        echo -e " ${GREEN}✔ Updated $cfg to 1920x1080 + ISP Sharpness/WDR tuning & un-mirroring${RESET}"
+        sed -i 's|VIDEOSRC=.*|VIDEOSRC="icamerasrc buffer-count=10 sensor-resolution=0 src-stream-usage=1 sharpness=40 contrast=15 saturation=15 wdr-level=140 ! videoflip video-direction=horiz"|' "$cfg"
+        echo -e " ${GREEN}✔ Updated $cfg to 1920x1080 + High-Def ISP Tuning (Sharpness=40, Contrast=15, Saturation=15, WDR=140)${RESET}"
     fi
 done
 
@@ -68,11 +68,12 @@ if [ -n "$SRC_DIR" ] && [ -d "$SRC_DIR" ]; then
         fi
     done
 
-    for sensor_xml in /etc/camera/ipu6/sensors/ov02c10-uf.xml /etc/camera/ipu6ep/sensors/ov02c10-uf.xml /etc/camera/ipu6epmtl/sensors/ov02c10-uf.xml; do
+    for sensor_xml in /etc/camera/ipu6/sensors/ov02c10-uf.xml /etc/camera/ipu6ep/sensors/ov02c10-uf.xml /etc/camera/ipu6epmtl/sensors/ov02c10-uf.xml /etc/camera/ipu6/sensors/ov02c10-uf-0.xml /etc/camera/ipu6ep/sensors/ov02c10-uf-0.xml /etc/camera/ipu6epmtl/sensors/ov02c10-uf-0.xml; do
         if [ -f "$sensor_xml" ]; then
             sed -i "s/OV02C10_[A-Z0-9]*_ADL/OV02C10_KBFC645_ADL/g" "$sensor_xml"
-            sed -i 's/supportedAeExposureTimeRange value="AUTO,10,1000000"/supportedAeExposureTimeRange value="AUTO,100,1000000"/' "$sensor_xml"
-            sed -i 's/supportedAeGainRange value="AUTO,0,60"/supportedAeGainRange value="AUTO,1,60"/' "$sensor_xml"
+            sed -i 's/supportedSceneMode value="NORMAL,HDR,HDR2"/supportedSceneMode value="NORMAL"/' "$sensor_xml"
+            sed -i 's/supportedAeExposureTimeRange value="[A-Z0-9,]*"/supportedAeExposureTimeRange value="AUTO,10,1000000"/' "$sensor_xml"
+            sed -i 's/supportedAeGainRange value="[A-Z0-9,]*"/supportedAeGainRange value="AUTO,0,60"/' "$sensor_xml"
             echo -e " ${GREEN}✔ Updated $sensor_xml (KBFC645 profile & AE Exposure/Gain range fix)${RESET}"
         fi
     done
@@ -146,7 +147,9 @@ if [ -c "/dev/video0" ]; then
     v4l2-ctl -d /dev/video0 --get-fmt-video | sed "s/^/   /"
     
     echo -e " Capturing test frame to /tmp/samsung_camera_test.jpg..."
-    if timeout --signal=2 5s gst-launch-1.0 -q v4l2src device=/dev/video0 num-buffers=10 ! videoconvert ! jpegenc ! filesink location=/tmp/samsung_camera_test.jpg; then
+    rm -f /tmp/samsung_camera_test.jpg
+    if timeout --signal=2 5s gst-launch-1.0 -q v4l2src device=/dev/video0 num-buffers=10 ! videoconvert ! jpegenc quality=95 ! filesink location=/tmp/samsung_camera_test.jpg; then
+        chown "$TARGET_USER:$TARGET_USER" /tmp/samsung_camera_test.jpg 2>/dev/null || true
         echo -e " ${GREEN}✔ Test frame captured successfully to /tmp/samsung_camera_test.jpg!${RESET}"
     fi
 fi
